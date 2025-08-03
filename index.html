@@ -1,55 +1,70 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-  <meta charset="UTF-8">
-  <title>Primis App</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Primis TikTok</title>
   <style>
-    body { font-family: sans-serif; padding: 20px; }
+    body {
+      font-family: sans-serif;
+      margin: 0;
+      background-color: #111;
+      color: #fff;
+    }
     .hidden { display: none; }
+    video { max-width: 100%; border-radius: 10px; }
+    .container { padding: 16px; max-width: 500px; margin: auto; }
+    input, button {
+      display: block;
+      width: 100%;
+      margin: 8px 0;
+      padding: 10px;
+      font-size: 16px;
+    }
+    #feed video { margin-bottom: 20px; }
   </style>
 </head>
 <body>
-  <!-- Auth Section -->
-  <section id="auth">
-    <h2>Connexion</h2>
-    <input type="email" id="email" placeholder="Email"><br>
-    <input type="password" id="password" placeholder="Mot de passe"><br>
-    <button id="loginBtn">Se connecter</button>
-    <button id="registerBtn">Créer un compte</button>
-  </section>
+  <div class="container">
+    <div id="auth">
+      <h2>Connexion / Inscription</h2>
+      <input type="email" id="email" placeholder="Email" />
+      <input type="password" id="password" placeholder="Mot de passe" />
+      <button id="registerBtn">Créer un compte</button>
+      <button id="loginBtn">Se connecter</button>
+    </div>
 
-  <!-- Main Section -->
-  <section id="main" class="hidden">
-    <h2>Bienvenue <span id="userEmail"></span></h2>
-    <button id="logoutBtn">Déconnexion</button>
-    <h3>Publier un message</h3>
-    <textarea id="message" placeholder="Écris quelque chose..."></textarea><br>
-    <button id="postBtn">Publier</button>
-    <h3>Fil d'actualité</h3>
-    <ul id="feed"></ul>
-  </section>
+    <div id="main" class="hidden">
+      <p>Connecté en tant que <span id="userEmail"></span></p>
+      <input type="file" id="videoInput" accept="video/*" />
+      <button id="uploadBtn">Poster la vidéo</button>
+      <button id="logoutBtn">Se déconnecter</button>
+      <h3>Fil de vidéos</h3>
+      <div id="feed"></div>
+    </div>
+  </div>
 
-  <!-- Firebase App -->
+  <!-- Firebase -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-app.js";
     import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-auth.js";
     import { getFirestore, collection, addDoc, onSnapshot, query, orderBy } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-firestore.js";
+    import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-storage.js";
 
-    // 🔥 Remplace ici avec TES données Firebase :
     const firebaseConfig = {
-      apiKey: "COLLE_TA_VRAIE_CLE_ICI",
+      apiKey: "AIzaSyAI2hUTDGNEx4vWZcqW9h_b9WWTk_TEa18",
       authDomain: "primis-39910.firebaseapp.com",
       projectId: "primis-39910",
       storageBucket: "primis-39910.appspot.com",
-      messagingSenderId: "TON_ID",
-      appId: "TON_APP_ID"
+      messagingSenderId: "125000934636",
+      appId: "1:125000934636:web:5b58fcd93f53df297771c9"
     };
 
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
     const db = getFirestore(app);
+    const storage = getStorage(app);
 
-    // DOM
     const loginBtn = document.getElementById("loginBtn");
     const registerBtn = document.getElementById("registerBtn");
     const logoutBtn = document.getElementById("logoutBtn");
@@ -58,8 +73,8 @@
     const userEmailSpan = document.getElementById("userEmail");
     const mainSection = document.getElementById("main");
     const authSection = document.getElementById("auth");
-    const postBtn = document.getElementById("postBtn");
-    const messageInput = document.getElementById("message");
+    const uploadBtn = document.getElementById("uploadBtn");
+    const videoInput = document.getElementById("videoInput");
     const feed = document.getElementById("feed");
 
     registerBtn.onclick = () => {
@@ -75,16 +90,19 @@
 
     logoutBtn.onclick = () => signOut(auth);
 
-    postBtn.onclick = async () => {
-      const message = messageInput.value.trim();
-      if (message) {
-        await addDoc(collection(db, "posts"), {
-          user: auth.currentUser.email,
-          text: message,
-          timestamp: new Date()
-        });
-        messageInput.value = "";
-      }
+    uploadBtn.onclick = async () => {
+      const file = videoInput.files[0];
+      if (!file) return alert("Choisis une vidéo");
+      const storageRef = ref(storage, "videos/" + Date.now() + ".mp4");
+      await uploadBytes(storageRef, file);
+      const url = await getDownloadURL(storageRef);
+      await addDoc(collection(db, "videos"), {
+        user: auth.currentUser.email,
+        url,
+        timestamp: new Date()
+      });
+      alert("Vidéo postée !");
+      videoInput.value = "";
     };
 
     onAuthStateChanged(auth, user => {
@@ -98,14 +116,15 @@
       }
     });
 
-    onSnapshot(query(collection(db, "posts"), orderBy("timestamp", "desc")), snapshot => {
+    onSnapshot(query(collection(db, "videos"), orderBy("timestamp", "desc")), snapshot => {
       feed.innerHTML = "";
       snapshot.forEach(doc => {
-        const li = document.createElement("li");
-        li.textContent = `${doc.data().user}: ${doc.data().text}`;
-        feed.appendChild(li);
+        const video = document.createElement("video");
+        video.src = doc.data().url;
+        video.controls = true;
+        feed.appendChild(video);
       });
     });
   </script>
 </body>
-  </html>
+</html> 
