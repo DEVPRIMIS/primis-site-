@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8" />
+  <title>Primis Social</title>
+  <script type="module" src="app.js" defer></script>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div id="app">
+    <h1>Primis Social</h1>
+
+    <div id="auth">
+      <input id="email" type="email" placeholder="Email" />
+      <input id="password" type="password" placeholder="Mot de passe" />
+      <button id="loginBtn">Connexion</button>
+      <button id="registerBtn">Créer un compte</button>
+    </div>
+
+    <div id="main" class="hidden">
+      <p>Connecté en tant que <span id="userEmail"></span></p>
+      <button id="logoutBtn">Déconnexion</button>
+
+      <h2>Poster une vidéo / actu</h2>
+      <input type="text" id="message" placeholder="Écris quelque chose..." />
+      <button id="postBtn">Publier</button>
+
+      <h2>Fil d’actualité</h2>
+      <ul id="feed"></ul>
+    </div>
+  </div>
+</body>
+</html>
